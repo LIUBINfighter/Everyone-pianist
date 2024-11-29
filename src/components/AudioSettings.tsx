@@ -28,7 +28,7 @@ export const AudioSettingsPanel: React.FC<AudioSettingsProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
-        <h3 className="text-xl font-bold mb-4 dark:text-white">音频设置</h3>
+        <h3 className="text-xl font-bold mb-4 dark:text-white">音频设置(Experimental!)</h3>
         
         {/* 音量设置 */}
         <div className="mb-4">
