@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Song } from '@/lib/types'
+import { parseMidiFile } from '@/lib/midiParser'
 
 interface SongUploaderProps {
   onSongAdd: (song: Song) => void
@@ -10,26 +11,40 @@ interface SongUploaderProps {
 export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(false)
 
   // 处理文件上传
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    try {
-      const text = await file.text()
-      const song: Song = JSON.parse(text)
-      
-      // 验证歌曲数据
-      if (!validateSong(song)) {
-        throw new Error('无效的乐谱格式')
-      }
+    setIsLoading(true)
+    setError('')
 
-      onSongAdd(song)
-      setIsOpen(false)
-      setError('')
+    try {
+      if (file.name.endsWith('.mid') || file.name.endsWith('.midi')) {
+        // 处理 MIDI 文件
+        const song = await parseMidiFile(file)
+        onSongAdd(song)
+        setIsOpen(false)
+      } else if (file.name.endsWith('.json')) {
+        // 处理 JSON 文件
+        const text = await file.text()
+        const song: Song = JSON.parse(text)
+        
+        if (!validateSong(song)) {
+          throw new Error('无效的乐谱格式')
+        }
+
+        onSongAdd(song)
+        setIsOpen(false)
+      } else {
+        throw new Error('不支持的文件格式')
+      }
     } catch (err) {
-      setError('文件格式错误，请上传有效的 JSON 乐谱文件')
+      setError(err instanceof Error ? err.message : '文件处理出错')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -63,38 +78,39 @@ export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
             {/* 文件上传 */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                上传 JSON 文件
+                上传 MIDI 或 JSON 文件
               </label>
               <input
                 type="file"
-                accept=".json"
+                accept=".mid,.midi,.json"
                 onChange={handleFileUpload}
                 className="w-full border dark:border-gray-600 rounded p-2 dark:bg-gray-700 dark:text-gray-200"
+                disabled={isLoading}
               />
               {error && (
                 <p className="text-red-500 dark:text-red-400 text-sm mt-1">{error}</p>
               )}
+              {isLoading && (
+                <p className="text-blue-500 dark:text-blue-400 text-sm mt-1">
+                  正在处理文件...
+                </p>
+              )}
             </div>
 
-            {/* 示例格式 */}
+            {/* 支持的格式说明 */}
             <div className="mb-4">
-              <h4 className="font-medium mb-2 dark:text-gray-200">JSON 格式示例：</h4>
-              <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded text-xs dark:text-gray-300">
-{`{
-  "title": "歌曲名称",
-  "tempo": 120,
-  "notes": [
-    { "pitch": "C4", "duration": "4n" },
-    { "pitch": "D4", "duration": "4n" }
-  ]
-}`}
-              </pre>
+              <h4 className="font-medium mb-2 dark:text-gray-200">支持的格式：</h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
+                <li>MIDI 文件 (.mid, .midi)</li>
+                <li>JSON 文件 (.json)</li>
+              </ul>
             </div>
 
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setIsOpen(false)}
                 className="px-4 py-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
+                disabled={isLoading}
               >
                 取消
               </button>
