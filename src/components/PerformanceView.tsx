@@ -2,101 +2,29 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { audioEngine } from '@/lib/audio'
+import { ParticleSystem } from '@/lib/animation'
 import { Song, Note, AudioSettings, defaultAudioSettings } from '@/lib/types'
 import { songs as defaultSongs } from '@/lib/songs/demo'
 import { ControlPanel } from './ControlPanel'
 
 export const PerformanceView = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const particleSystemRef = useRef<ParticleSystem | null>(null)
+  const animationFrameRef = useRef<number>()
   const [currentSong, setCurrentSong] = useState<Song>(defaultSongs[0])
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
-
-  // 动画相关状态
-  const [particles, setParticles] = useState<any[]>([])
-  const animationFrameRef = useRef<number>()
 
   // 添加新的状态
   const [songs, setSongs] = useState<Song[]>(defaultSongs)
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(defaultAudioSettings)
 
-  // 初始化画布
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  // 添加按键状态追踪
+  const pressedKeysRef = useRef<Set<string>>(new Set())
+  const lastPlayTimeRef = useRef<number>(0)
+  const minPlayInterval = 100 // 最小播放间隔(ms)
 
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-
-    // 处理窗口大小变化
-    const handleResize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  // 处理按键事件
-  useEffect(() => {
-    const handleKeyPress = async (e: KeyboardEvent) => {
-      if (isPlaying) return
-      
-      const currentNote = currentSong.notes[currentNoteIndex]
-      if (!currentNote) return
-
-      setIsPlaying(true)
-
-      try {
-        // 播放音符
-        if (Array.isArray(currentNote.pitch)) {
-          await audioEngine.playChord(currentNote.pitch, currentNote.duration)
-        } else {
-          await audioEngine.playNote(currentNote.pitch, currentNote.duration)
-        }
-
-        // 添加动画粒子
-        addParticles(currentNote)
-
-        // 更新音符索引
-        setCurrentNoteIndex(prev => 
-          prev < currentSong.notes.length - 1 ? prev + 1 : 0
-        )
-
-        setTimeout(() => setIsPlaying(false), 10)
-      } catch (error) {
-        console.error('播放失败:', error)
-        setIsPlaying(false)
-      }
-    }
-
-    window.addEventListener('keypress', handleKeyPress)
-    return () => window.removeEventListener('keypress', handleKeyPress)
-  }, [currentNoteIndex, currentSong.notes, isPlaying])
-
-  // 添加动画粒子
-  const addParticles = (note: Note) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const centerX = canvas.width / 2
-    const centerY = canvas.height / 2
-
-    const newParticles = Array.from({ length: 10 }, () => ({
-      x: centerX,
-      y: centerY,
-      size: Math.random() * 5 + 2,
-      speedX: (Math.random() - 0.5) * 10,
-      speedY: (Math.random() - 0.5) * 10,
-      color: `hsl(${Math.random() * 360}, 70%, 70%)`,
-      alpha: 1
-    }))
-
-    setParticles(prev => [...prev, ...newParticles])
-  }
-
-  // 动画循环
+  // 初始化画布和粒子系统
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -104,36 +32,122 @@ export const PerformanceView = () => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // 设置画布尺寸
+    const updateCanvasSize = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      particleSystemRef.current = new ParticleSystem(
+        ctx,
+        canvas.width,
+        canvas.height
+      )
+    }
+
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
+
+    // 动画循环
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      const updatedParticles = particles.map(particle => ({
-        ...particle,
-        x: particle.x + particle.speedX,
-        y: particle.y + particle.speedY,
-        alpha: particle.alpha - 0.01,
-        size: particle.size * 0.99
-      })).filter(particle => particle.alpha > 0)
-
-      updatedParticles.forEach(particle => {
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
-        ctx.fillStyle = `${particle.color}${Math.floor(particle.alpha * 255).toString(16).padStart(2, '0')}`
-        ctx.fill()
-      })
-
-      setParticles(updatedParticles)
+      if (particleSystemRef.current) {
+        particleSystemRef.current.clear()
+        particleSystemRef.current.update()
+        particleSystemRef.current.draw()
+      }
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
     animationFrameRef.current = requestAnimationFrame(animate)
+
     return () => {
+      window.removeEventListener('resize', updateCanvasSize)
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [particles])
+  }, [])
+
+  // 处理音符播放和动画
+  const playNoteWithAnimation = async (note: Note) => {
+    if (!particleSystemRef.current) return
+
+    // 生成随机颜色
+    const hue = Math.random() * 360
+    const color = `hsl(${hue}, 70%, 60%)`
+
+    // 在画布中心添加粒子
+    const canvas = canvasRef.current
+    if (canvas) {
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      particleSystemRef.current.addParticles(centerX, centerY, 20, color)
+    }
+
+    // 播放音符
+    if (Array.isArray(note.pitch)) {
+      await audioEngine.playChord(note.pitch, note.duration)
+    } else {
+      await audioEngine.playNote(note.pitch, note.duration)
+    }
+  }
+
+  // 处理按键事件
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // 如果按键已经被按下,则忽略
+      if (pressedKeysRef.current.has(e.code)) {
+        return
+      }
+
+      // 检查是否满足最小播放间隔
+      const now = Date.now()
+      if (now - lastPlayTimeRef.current < minPlayInterval) {
+        return
+      }
+
+      // 记录按键状态
+      pressedKeysRef.current.add(e.code)
+      
+      if (isPlaying) return
+      
+      const currentNote = currentSong.notes[currentNoteIndex]
+      if (!currentNote) return
+
+      setIsPlaying(true)
+      lastPlayTimeRef.current = now
+
+      try {
+        await playNoteWithAnimation(currentNote)
+        setCurrentNoteIndex(prev => 
+          prev < currentSong.notes.length - 1 ? prev + 1 : 0
+        )
+        setTimeout(() => setIsPlaying(false), minPlayInterval)
+      } catch (error) {
+        console.error('播放失败:', error)
+        setIsPlaying(false)
+      }
+    }
+
+    // 处理按键释放
+    const handleKeyUp = (e: KeyboardEvent) => {
+      pressedKeysRef.current.delete(e.code)
+    }
+
+    // 处理页面失焦时清理按键状态
+    const handleBlur = () => {
+      pressedKeysRef.current.clear()
+      setIsPlaying(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [currentNoteIndex, currentSong.notes, isPlaying])
 
   // 添加处理函数
   const handleSongAdd = (newSong: Song) => {
@@ -158,7 +172,7 @@ export const PerformanceView = () => {
 
       <canvas
         ref={canvasRef}
-        className="w-full h-full"
+        className="w-full h-full bg-black"
       />
       
       {/* 添加歌曲选择器 */}
@@ -182,7 +196,7 @@ export const PerformanceView = () => {
         ))}
       </div>
 
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center z-10">
         <h1 className="text-4xl font-bold mb-4">{currentSong.title}</h1>
         <p className="text-xl opacity-70">按任意键演奏</p>
         <p className="mt-2 text-sm opacity-50">
