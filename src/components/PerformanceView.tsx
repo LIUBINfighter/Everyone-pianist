@@ -66,29 +66,39 @@ export const PerformanceView = () => {
     }
   }, [])
 
-  // 处理音符播放和动画
-  const playNoteWithAnimation = async (note: Note) => {
-    if (!particleSystemRef.current) return
+  // 初始化时生成所有音符的气泡
+  useEffect(() => {
+    if (!particleSystemRef.current || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const totalNotes = currentSong.notes.length;
+    const verticalSpacing = canvas.height / (totalNotes + 1);
+    
+    // 为每个音符创建一个气泡
+    currentSong.notes.forEach((_, index) => {
+      const y = verticalSpacing * (index + 1);
+      particleSystemRef.current?.addBubbleNote(y);
+    });
+  }, [currentSong]);
 
-    // 生成随机颜色
-    const hue = Math.random() * 360
-    const color = `hsl(${hue}, 70%, 60%)`
+  // 修改播放动画逻辑
+  const playNoteWithAnimation = async (note: Note, index: number) => {
+    if (!particleSystemRef.current || !canvasRef.current) return;
 
-    // 在画布中心添加粒子
-    const canvas = canvasRef.current
-    if (canvas) {
-      const centerX = canvas.width / 2
-      const centerY = canvas.height / 2
-      particleSystemRef.current.addParticles(centerX, centerY, 20, color)
-    }
+    const canvas = canvasRef.current;
+    const verticalSpacing = canvas.height / (currentSong.notes.length + 1);
+    const y = verticalSpacing * (index + 1);
+
+    // 添加已播放的气泡
+    particleSystemRef.current.addBubbleNote(y, true);
 
     // 播放音符
     if (Array.isArray(note.pitch)) {
-      await audioEngine.playChord(note.pitch, note.duration)
+      await audioEngine.playChord(note.pitch, note.duration);
     } else {
-      await audioEngine.playNote(note.pitch, note.duration)
+      await audioEngine.playNote(note.pitch, note.duration);
     }
-  }
+  };
 
   // 处理按键事件
   useEffect(() => {
@@ -116,7 +126,7 @@ export const PerformanceView = () => {
       lastPlayTimeRef.current = now
 
       try {
-        await playNoteWithAnimation(currentNote)
+        await playNoteWithAnimation(currentNote, currentNoteIndex)
         setCurrentNoteIndex(prev => 
           prev < currentSong.notes.length - 1 ? prev + 1 : 0
         )
@@ -162,7 +172,7 @@ export const PerformanceView = () => {
   }
 
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 bg-music-gradient">
       {/* 添加控制面板 */}
       <ControlPanel
         onSongAdd={handleSongAdd}
@@ -172,7 +182,7 @@ export const PerformanceView = () => {
 
       <canvas
         ref={canvasRef}
-        className="w-full h-full bg-black"
+        className="w-full h-full"
       />
       
       {/* 添加歌曲选择器 */}
