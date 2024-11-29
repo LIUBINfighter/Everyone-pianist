@@ -2,22 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-}
-
-[data-theme="dark"] {
-  --background: 222.2 84% 4.9%;
-  --foreground: 0 0% 100%;
-}
-
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-/* 添加一些全局过渡效果 */
-.transition-theme {
-  transition: background-color 0.3s ease, color 0.3s ease;
+@layer components {
+  .piano-key {
+    @apply h-full relative cursor-pointer transition-colors duration-150;
+  }
+  
+  .piano-key-white {
+    @apply bg-white hover:bg-gray-50 active:bg-gray-100;
+  }
+  
+  .piano-key-black {
+    @apply bg-black hover:bg-gray-800 active:bg-gray-700;
+  }
 }

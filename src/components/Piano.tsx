@@ -117,7 +117,7 @@ export const Piano: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
+    <div className="w-full max-w-7xl mx-auto p-4">
       <DemoTag />
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-theme">
         {/* 添加设置按钮 */}
