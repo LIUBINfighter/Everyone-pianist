@@ -67,7 +67,7 @@ export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
         onClick={() => setIsOpen(true)}
         className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
       >
-        上传乐谱
+        解析乐谱
       </button>
 
       {isOpen && (
@@ -78,7 +78,9 @@ export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
             {/* 文件上传 */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2 dark:text-gray-200">
-                上传 MIDI 或 JSON 文件
+                上传 MIDI 或 JSON 文件 <br />
+                目前文件在前端直接解码<br />
+                之后会开放后端下载社区midi
               </label>
               <input
                 type="file"
