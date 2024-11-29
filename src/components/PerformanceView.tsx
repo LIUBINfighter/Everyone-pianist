@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { audioEngine } from '@/lib/audio'
-import { Song, Note } from '@/lib/types'
+import { Song, Note, AudioSettings, defaultAudioSettings } from '@/lib/types'
 import { songs as defaultSongs } from '@/lib/songs/demo'
+import { ControlPanel } from './ControlPanel'
 
 export const PerformanceView = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -14,6 +15,10 @@ export const PerformanceView = () => {
   // 动画相关状态
   const [particles, setParticles] = useState<any[]>([])
   const animationFrameRef = useRef<number>()
+
+  // 添加新的状态
+  const [songs, setSongs] = useState<Song[]>(defaultSongs)
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>(defaultAudioSettings)
 
   // 初始化画布
   useEffect(() => {
@@ -130,15 +135,59 @@ export const PerformanceView = () => {
     }
   }, [particles])
 
+  // 添加处理函数
+  const handleSongAdd = (newSong: Song) => {
+    setSongs(prev => [...prev, newSong])
+    setCurrentSong(newSong)  // 可选：自动切换到新添加的歌曲
+    setCurrentNoteIndex(0)   // 重置音符索引
+  }
+
+  const handleSettingsChange = (newSettings: AudioSettings) => {
+    setAudioSettings(newSettings)
+    audioEngine.updateSettings(newSettings)
+  }
+
   return (
     <div className="fixed inset-0">
+      {/* 添加控制面板 */}
+      <ControlPanel
+        onSongAdd={handleSongAdd}
+        audioSettings={audioSettings}
+        onSettingsChange={handleSettingsChange}
+      />
+
       <canvas
         ref={canvasRef}
         className="w-full h-full"
       />
+      
+      {/* 添加歌曲选择器 */}
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 flex gap-2 z-50">
+        {songs.map((song) => (
+          <button
+            key={song.title}
+            onClick={() => {
+              setCurrentSong(song)
+              setCurrentNoteIndex(0)
+            }}
+            className={`
+              px-4 py-2 rounded-full transition-all
+              ${currentSong.title === song.title
+                ? 'bg-white text-black'
+                : 'bg-gray-800/50 hover:bg-gray-800/70 text-white'}
+            `}
+          >
+            {song.title}
+          </button>
+        ))}
+      </div>
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center">
         <h1 className="text-4xl font-bold mb-4">{currentSong.title}</h1>
         <p className="text-xl opacity-70">按任意键演奏</p>
+        <p className="mt-2 text-sm opacity-50">
+          当前进度: {currentNoteIndex + 1} / {currentSong.notes.length}
+        </p>
       </div>
     </div>
   )
