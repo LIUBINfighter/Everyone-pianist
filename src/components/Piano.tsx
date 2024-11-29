@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { audioEngine } from '@/lib/audio'
-import { songs } from '@/lib/songs/demo'
+import { songs as defaultSongs } from '@/lib/songs/demo'
 import { Song } from '@/lib/types'
+import { SongUploader } from './SongUploader'
+import { DemoTag } from './DemoTag'
 
 export const Piano: React.FC = () => {
+  const [songs, setSongs] = useState<Song[]>(defaultSongs)
   const [currentSong, setCurrentSong] = useState<Song>(songs[0])
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -61,13 +64,22 @@ export const Piano: React.FC = () => {
     ))
   }
 
+  // 处理添加新歌曲
+  const handleAddSong = (newSong: Song) => {
+    setSongs(prev => [...prev, newSong])
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
-      <div className="bg-gray-100 p-6 rounded-lg shadow-lg">
-        {/* 歌曲选择器 */}
+      <DemoTag />
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-theme">
+        {/* 歌曲选择器和上传按钮 */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">选择乐曲</h3>
-          <div className="flex gap-2">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold dark:text-gray-200">选择乐曲</h3>
+            <SongUploader onSongAdd={handleAddSong} />
+          </div>
+          <div className="flex gap-2 flex-wrap">
             {songs.map((song) => (
               <button
                 key={song.title}
@@ -76,7 +88,7 @@ export const Piano: React.FC = () => {
                   px-4 py-2 rounded-lg transition-colors
                   ${currentSong.title === song.title
                     ? 'bg-blue-500 text-white'
-                    : 'bg-white hover:bg-blue-100'}
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-gray-600'}
                 `}
               >
                 {song.title}
@@ -85,20 +97,20 @@ export const Piano: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-4">{currentSong.title}</h2>
-        <p className="text-gray-600 mb-4">
+        <h2 className="text-2xl font-bold mb-4 dark:text-white">{currentSong.title}</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
           按任意键演奏下一个音符
         </p>
         
         {/* 乐谱显示区域 */}
-        <div className="mb-6 p-4 bg-white rounded-lg overflow-x-auto">
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg overflow-x-auto">
           <div className="flex flex-wrap">
             {renderNotes()}
           </div>
         </div>
 
         {/* 播放状态 */}
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           <p>当前进度: {currentNoteIndex + 1} / {currentSong.notes.length}</p>
           <p>状态: {isPlaying ? '播放中' : '等待按键'}</p>
           <p>速度: {currentSong.tempo} BPM</p>
