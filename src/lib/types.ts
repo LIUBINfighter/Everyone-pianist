@@ -1,5 +1,5 @@
 export interface Note {
-  pitch: string;    // 音高，例如 'C4', 'D4' 等
+  pitch: string | string[];  // 单音符或和弦音符数组
   duration: string; // 音符时值，例如 '4n'(四分音符), '8n'(八分音符)
 }
 
@@ -25,4 +25,10 @@ export const defaultAudioSettings: AudioSettings = {
   sustain: 0.3,
   release: 0.8,
   oscillatorType: 'sine'
-}; 
+};
+
+export interface Chord {
+  root: string;        // 根音
+  quality: string;     // 和弦性质（如 major, minor, 7th 等）
+  notes: string[];     // 组成音符
+} 

@@ -80,6 +80,37 @@ class AudioEngine {
       console.error('Error stopping audio:', error);
     }
   }
+
+  // 添加和弦播放方法
+  async playChord(notes: string[], duration: string = '8n') {
+    try {
+      await this.initialize();
+      
+      // 同时触发多个音符
+      this.synth.triggerAttackRelease(notes, duration);
+    } catch (error) {
+      console.error('Error playing chord:', error);
+    }
+  }
+
+  // 添加和弦工具方法
+  getChordNotes(root: string, quality: string): string[] {
+    // 根据和弦类型返回对应的音符数组
+    const chordMap = {
+      'major': [0, 4, 7],         // 大三和弦
+      'minor': [0, 3, 7],         // 小三和弦
+      'dominant7': [0, 4, 7, 10], // 属七和弦
+      // 可以添加更多和弦类型...
+    };
+
+    const intervals = chordMap[quality] || chordMap['major'];
+    return intervals.map(interval => this.transposeNote(root, interval));
+  }
+
+  private transposeNote(note: string, semitones: number): string {
+    // 实现音符移调的逻辑
+    // ...
+  }
 }
 
 // 导出单例实例

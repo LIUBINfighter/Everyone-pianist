@@ -34,15 +34,19 @@ export const Piano: React.FC = () => {
       setIsPlaying(true)
       
       try {
-        // 播放当前音符
-        audioEngine.playNote(currentNote.pitch, currentNote.duration)
+        // 判断是单音符还是和弦
+        if (Array.isArray(currentNote.pitch)) {
+          // 播放和弦
+          audioEngine.playChord(currentNote.pitch, currentNote.duration)
+        } else {
+          // 播放单音符
+          audioEngine.playNote(currentNote.pitch, currentNote.duration)
+        }
         
-        // 立即更新到下一个音符
         setCurrentNoteIndex(prev => 
           prev < currentSong.notes.length - 1 ? prev + 1 : 0
         )
         
-        // 非常短的延迟后允许下一次按键
         setTimeout(() => {
           setIsPlaying(false)
         }, 10)
