@@ -27,10 +27,7 @@ export const Piano: React.FC = () => {
 
   // 播放当前音符
   const playCurrentNote = useCallback(async () => {
-    
-    // if (isPlaying) return
-    if (isPlaying || !audioEngine) return  // 添加 audioEngine 检查
-
+    if (isPlaying || !audioEngine) return
 
     const currentNote = currentSong.notes[currentNoteIndex]
     if (!currentNote) return
@@ -121,9 +118,9 @@ export const Piano: React.FC = () => {
   // 处理设置更新
   const handleSettingsChange = (newSettings: AudioSettings) => {
     setAudioSettings(newSettings)
-
-    audioEngine?.updateSettings(newSettings)
-
+    if (audioEngine) {
+      audioEngine.updateSettings(newSettings)
+    }
   }
 
   return (

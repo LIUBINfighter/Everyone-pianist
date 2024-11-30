@@ -84,43 +84,24 @@ export const PerformanceView = () => {
 
   // 修改播放动画逻辑
   const playNoteWithAnimation = useCallback(async (note: Note, index: number) => {
-
-    // 先检查所有依赖
-    if (!particleSystemRef.current || !canvasRef.current || !audioEngine) {
-      console.warn('播放依赖未就绪:', {
-        hasParticleSystem: !!particleSystemRef.current,
-        hasCanvas: !!canvasRef.current,
-        hasAudioEngine: !!audioEngine
-      });
-      return;
-    }
-
+    if (!particleSystemRef.current || !canvasRef.current || !audioEngine) return;
 
     const canvas = canvasRef.current;
     const verticalSpacing = canvas.height / (currentSong.notes.length + 1);
     const y = verticalSpacing * (index + 1);
 
+    // 添加已播放的气泡
+    particleSystemRef.current.addBubbleNote(y, true);
+
+    // 播放音符
     try {
-      // 先添加动画
-      particleSystemRef.current.addBubbleNote(y, true);
-
-
-      // 再播放音符
-
       if (Array.isArray(note.pitch)) {
         await audioEngine.playChord(note.pitch, note.duration);
       } else {
         await audioEngine.playNote(note.pitch, note.duration);
       }
     } catch (error) {
-
-      console.error('播放音符失败:', {
-        note,
-        error,
-        index
-      });
-      throw error;
-
+      console.error('播放音符失败:', error);
     }
   }, [currentSong.notes.length]);
 
@@ -180,7 +161,6 @@ export const PerformanceView = () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
-      audioEngine?.stopAll();
     }
   }, [currentNoteIndex, currentSong.notes, isPlaying, playNoteWithAnimation])
 
@@ -193,12 +173,6 @@ export const PerformanceView = () => {
 
   const handleSettingsChange = useCallback((newSettings: AudioSettings) => {
     setAudioSettings(newSettings);
-
-    if (audioEngine) {  // 添加 null 检查
-      audioEngine.updateSettings(newSettings);
-    }
-  }, []);
-<!--
     try {
       if (isAudioInitialized) {
         const engine = getAudioEngine();
@@ -222,7 +196,6 @@ export const PerformanceView = () => {
       console.error('初始化音频引擎失败:', error);
     }
   }, [audioSettings, isAudioInitialized]);
--->
 
   return (
     <div className="fixed inset-0 bg-music-gradient">
