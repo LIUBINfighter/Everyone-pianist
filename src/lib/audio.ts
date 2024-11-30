@@ -151,5 +151,21 @@ class AudioEngine {
   }
 }
 
-// 导出单例实例
-export const audioEngine = typeof window !== 'undefined' ? new AudioEngine() : null; 
+// 创建单例实例
+let audioEngineInstance: AudioEngine | null = null;
+
+// 导出获取实例的函数
+export function getAudioEngine(): AudioEngine {
+  if (typeof window === 'undefined') {
+    throw new Error('AudioEngine can only be used in browser environment');
+  }
+  
+  if (!audioEngineInstance) {
+    audioEngineInstance = new AudioEngine();
+  }
+  
+  return audioEngineInstance;
+}
+
+// 导出便捷访问实例
+export const audioEngine = typeof window !== 'undefined' ? getAudioEngine() : null; 

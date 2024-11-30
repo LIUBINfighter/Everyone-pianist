@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { audioEngine } from '@/lib/audio'
+import { audioEngine, getAudioEngine } from '@/lib/audio'
 import { ParticleSystem } from '@/lib/animation'
 import { Song, Note, AudioSettings, defaultAudioSettings } from '@/lib/types'
 import { songs as defaultSongs } from '@/lib/songs/demo'
@@ -18,6 +18,7 @@ export const PerformanceView = () => {
   // 添加新的状态
   const [songs, setSongs] = useState<Song[]>(defaultSongs)
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(defaultAudioSettings)
+  const [isAudioInitialized, setIsAudioInitialized] = useState(false)
 
   // 添加按键状态追踪
   const pressedKeysRef = useRef<Set<string>>(new Set())
@@ -74,7 +75,7 @@ export const PerformanceView = () => {
     const totalNotes = currentSong.notes.length;
     const verticalSpacing = canvas.height / (totalNotes + 1);
     
-    // 为每个音符创建一个气泡
+    // 为每个符创建一个气泡
     currentSong.notes.forEach((_, index) => {
       const y = verticalSpacing * (index + 1);
       particleSystemRef.current?.addBubbleNote(y);
@@ -83,6 +84,7 @@ export const PerformanceView = () => {
 
   // 修改播放动画逻辑
   const playNoteWithAnimation = useCallback(async (note: Note, index: number) => {
+
     // 先检查所有依赖
     if (!particleSystemRef.current || !canvasRef.current || !audioEngine) {
       console.warn('播放依赖未就绪:', {
@@ -93,6 +95,7 @@ export const PerformanceView = () => {
       return;
     }
 
+
     const canvas = canvasRef.current;
     const verticalSpacing = canvas.height / (currentSong.notes.length + 1);
     const y = verticalSpacing * (index + 1);
@@ -101,19 +104,23 @@ export const PerformanceView = () => {
       // 先添加动画
       particleSystemRef.current.addBubbleNote(y, true);
 
+
       // 再播放音符
+
       if (Array.isArray(note.pitch)) {
         await audioEngine.playChord(note.pitch, note.duration);
       } else {
         await audioEngine.playNote(note.pitch, note.duration);
       }
     } catch (error) {
+
       console.error('播放音符失败:', {
         note,
         error,
         index
       });
       throw error;
+
     }
   }, [currentSong.notes.length]);
 
@@ -186,10 +193,36 @@ export const PerformanceView = () => {
 
   const handleSettingsChange = useCallback((newSettings: AudioSettings) => {
     setAudioSettings(newSettings);
+
     if (audioEngine) {  // 添加 null 检查
       audioEngine.updateSettings(newSettings);
     }
   }, []);
+<!--
+    try {
+      if (isAudioInitialized) {
+        const engine = getAudioEngine();
+        engine.updateSettings(newSettings);
+      }
+    } catch (error) {
+      console.error('更新音频设置失败:', error);
+    }
+  }, [isAudioInitialized]);
+
+  // 初始化音频引擎
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && !isAudioInitialized) {
+        const engine = getAudioEngine();
+        setIsAudioInitialized(true);
+        // 初始化时应用当前设置
+        engine.updateSettings(audioSettings);
+      }
+    } catch (error) {
+      console.error('初始化音频引擎失败:', error);
+    }
+  }, [audioSettings, isAudioInitialized]);
+-->
 
   return (
     <div className="fixed inset-0 bg-music-gradient">

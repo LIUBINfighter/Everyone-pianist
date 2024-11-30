@@ -27,34 +27,36 @@ export const Piano: React.FC = () => {
 
   // 播放当前音符
   const playCurrentNote = useCallback(async () => {
+    
     // if (isPlaying) return
     if (isPlaying || !audioEngine) return  // 添加 audioEngine 检查
 
+
     const currentNote = currentSong.notes[currentNoteIndex]
-    if (currentNote) {
-      setIsPlaying(true)
-      
-      try {
-        // 判断是单音符还是和弦
-        if (Array.isArray(currentNote.pitch)) {
-          // 播放和弦
-          audioEngine.playChord(currentNote.pitch, currentNote.duration)
-        } else {
-          // 播放单音符
-          audioEngine.playNote(currentNote.pitch, currentNote.duration)
-        }
-        
-        setCurrentNoteIndex(prev => 
-          prev < currentSong.notes.length - 1 ? prev + 1 : 0
-        )
-        
-        setTimeout(() => {
-          setIsPlaying(false)
-        }, 10)
-      } catch (error) {
-        console.error('Failed to play note:', error)
-        setIsPlaying(false)
+    if (!currentNote) return
+
+    setIsPlaying(true)
+    
+    try {
+      // 判断是单音符还是和弦
+      if (Array.isArray(currentNote.pitch)) {
+        // 播放和弦
+        await audioEngine.playChord(currentNote.pitch, currentNote.duration)
+      } else {
+        // 播放单音符
+        await audioEngine.playNote(currentNote.pitch, currentNote.duration)
       }
+      
+      setCurrentNoteIndex(prev => 
+        prev < currentSong.notes.length - 1 ? prev + 1 : 0
+      )
+      
+      setTimeout(() => {
+        setIsPlaying(false)
+      }, 10)
+    } catch (error) {
+      console.error('Failed to play note:', error)
+      setIsPlaying(false)
     }
   }, [currentNoteIndex, currentSong.notes, isPlaying])
 
@@ -119,7 +121,9 @@ export const Piano: React.FC = () => {
   // 处理设置更新
   const handleSettingsChange = (newSettings: AudioSettings) => {
     setAudioSettings(newSettings)
+
     audioEngine?.updateSettings(newSettings)
+
   }
 
   return (
