@@ -8,7 +8,7 @@ export function FloatingButton() {
     <div className="fixed bottom-4 right-4 flex items-center gap-4">
       {/* 反馈按钮 */}
       <a
-        href="https://github.com/你的用户名/仓库名/issues/new"
+        href="https://github.com/LIUBINfighter/Everyone-pianist/issues/new"
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
@@ -22,7 +22,7 @@ export function FloatingButton() {
 
       {/* GitHub 链接 */}
       <a
-        href="https://github.com/你的用户名/仓库名"
+        href="https://github.com/LIUBINfighter/Everyone-pianist"
         target="_blank"
         rel="noopener noreferrer"
         className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
