@@ -8,6 +8,16 @@ interface SongUploaderProps {
   onSongAdd: (song: Song) => void
 }
 
+// 添加类型定义
+interface SongData {
+  title: string;
+  tempo: number;
+  notes: Array<{
+    pitch: string | string[];
+    duration: string;
+  }>;
+}
+
 export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [error, setError] = useState<string>('')
@@ -48,18 +58,19 @@ export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
     }
   }
 
-  // 验证歌曲数据结构
-  const validateSong = (song: any): song is Song => {
+  // 修改验证函数
+  const validateSong = (song: unknown): song is Song => {
+    const s = song as SongData;
     return (
-      typeof song.title === 'string' &&
-      typeof song.tempo === 'number' &&
-      Array.isArray(song.notes) &&
-      song.notes.every((note: any) =>
-        typeof note.pitch === 'string' &&
+      typeof s?.title === 'string' &&
+      typeof s?.tempo === 'number' &&
+      Array.isArray(s?.notes) &&
+      s.notes.every(note =>
+        (typeof note.pitch === 'string' || Array.isArray(note.pitch)) &&
         typeof note.duration === 'string'
       )
-    )
-  }
+    );
+  };
 
   return (
     <div>
@@ -88,6 +99,7 @@ export const SongUploader: React.FC<SongUploaderProps> = ({ onSongAdd }) => {
                 onChange={handleFileUpload}
                 className="w-full border dark:border-gray-600 rounded p-2 dark:bg-gray-700 dark:text-gray-200"
                 disabled={isLoading}
+                aria-label="上传MIDI或JSON文件"
               />
               {error && (
                 <p className="text-red-500 dark:text-red-400 text-sm mt-1">{error}</p>

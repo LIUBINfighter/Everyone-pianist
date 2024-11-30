@@ -43,7 +43,7 @@ export const happyBirthday: Song = {
 }
 
 // 定义钢琴的完整音域（从 A0 到 C8）
-const fullRange = [
+export const PIANO_NOTES = [
   'A0', 'A#0', 'B0',
   'C1', 'C#1', 'D1', 'D#1', 'E1', 'F1', 'F#1', 'G1', 'G#1', 'A1', 'A#1', 'B1',
   'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2',
@@ -53,106 +53,21 @@ const fullRange = [
   'C6', 'C#6', 'D6', 'D#6', 'E6', 'F6', 'F#6', 'G6', 'G#6', 'A6', 'A#6', 'B6',
   'C7', 'C#7', 'D7', 'D#7', 'E7', 'F7', 'F#7', 'G7', 'G#7', 'A7', 'A#7', 'B7',
   'C8'
-]
+] as const;
 
+// 音域测试歌曲
 export const pianoRangeTest: Song = {
   title: "音域测试",
   tempo: 300,
-  notes: [
-    // { pitch: 'A0', duration: '8n' },
-    // { pitch: 'A#0', duration: '8n' },
-    // { pitch: 'B0', duration: '8n' },
-    // { pitch: 'C1', duration: '8n' },
-    // { pitch: 'C#1', duration: '8n' },
-    // { pitch: 'D1', duration: '8n' },
-    // { pitch: 'D#1', duration: '8n' },
-    // { pitch: 'E1', duration: '8n' },
-    // { pitch: 'F1', duration: '8n' },
-    // { pitch: 'F#1', duration: '8n' },
-    // { pitch: 'G1', duration: '8n' },
-    // { pitch: 'G#1', duration: '8n' },
-    // { pitch: 'A1', duration: '8n' },
-    // { pitch: 'A#1', duration: '8n' },
-    // { pitch: 'B1', duration: '8n' },
-    // { pitch: 'C2', duration: '8n' },
-    // { pitch: 'C#2', duration: '8n' },
-    // { pitch: 'D2', duration: '8n' },
-    // { pitch: 'D#2', duration: '8n' },
-    // { pitch: 'E2', duration: '8n' },
-    // { pitch: 'F2', duration: '8n' },
-    // { pitch: 'F#2', duration: '8n' },
-    // { pitch: 'G2', duration: '8n' },
-    // { pitch: 'G#2', duration: '8n' },
-    // { pitch: 'A2', duration: '8n' },
-    // { pitch: 'A#2', duration: '8n' },
-    // { pitch: 'B2', duration: '8n' },
-    { pitch: 'C3', duration: '8n' },
-    { pitch: 'C#3', duration: '8n' },
-    { pitch: 'D3', duration: '8n' },
-    { pitch: 'D#3', duration: '8n' },
-    { pitch: 'E3', duration: '8n' },
-    { pitch: 'F3', duration: '8n' },
-    { pitch: 'F#3', duration: '8n' },
-    { pitch: 'G3', duration: '8n' },
-    { pitch: 'G#3', duration: '8n' },
-    { pitch: 'A3', duration: '8n' },
-    { pitch: 'A#3', duration: '8n' },
-    { pitch: 'B3', duration: '8n' },
-    { pitch: 'C4', duration: '8n' },  
-    { pitch: 'C#4', duration: '8n' },
-    { pitch: 'D4', duration: '8n' },
-    { pitch: 'D#4', duration: '8n' },
-    { pitch: 'E4', duration: '8n' },
-    { pitch: 'F4', duration: '8n' },
-    { pitch: 'F#4', duration: '8n' },
-    { pitch: 'G4', duration: '8n' },
-    { pitch: 'G#4', duration: '8n' },
-    { pitch: 'A4', duration: '8n' },
-    { pitch: 'A#4', duration: '8n' },
-    { pitch: 'B4', duration: '8n' },
-    { pitch: 'C5', duration: '8n' },
-    { pitch: 'C#5', duration: '8n' },
-    { pitch: 'D5', duration: '8n' },
-    { pitch: 'D#5', duration: '8n' },
-    { pitch: 'E5', duration: '8n' },
-    { pitch: 'F5', duration: '8n' },
-    { pitch: 'F#5', duration: '8n' },
-    { pitch: 'G5', duration: '8n' },
-    { pitch: 'G#5', duration: '8n' },
-    { pitch: 'A5', duration: '8n' },
-    { pitch: 'A#5', duration: '8n' },
-    { pitch: 'B5', duration: '8n' },
-    { pitch: 'C6', duration: '8n' },  
-    { pitch: 'C#6', duration: '8n' },
-    { pitch: 'D6', duration: '8n' },
-    { pitch: 'D#6', duration: '8n' },
-    { pitch: 'E6', duration: '8n' },
-    { pitch: 'F6', duration: '8n' },
-    { pitch: 'F#6', duration: '8n' },
-    { pitch: 'G6', duration: '8n' },
-    { pitch: 'G#6', duration: '8n' },
-    { pitch: 'A6', duration: '8n' },
-    { pitch: 'A#6', duration: '8n' },
-    { pitch: 'B6', duration: '8n' },
-    { pitch: 'C7', duration: '8n' },
-    { pitch: 'C#7', duration: '8n' },
-    { pitch: 'D7', duration: '8n' },  
-    { pitch: 'D#7', duration: '8n' },
-    { pitch: 'E7', duration: '8n' },
-    { pitch: 'F7', duration: '8n' },
-    { pitch: 'F#7', duration: '8n' },
-    { pitch: 'G7', duration: '8n' },
-    { pitch: 'G#7', duration: '8n' },
-    { pitch: 'A7', duration: '8n' },
-    { pitch: 'A#7', duration: '8n' },
-    { pitch: 'B7', duration: '8n' },
-    { pitch: 'C8', duration: '8n' },
-  ]
-}
+  notes: PIANO_NOTES.slice(24).map(note => ({  // 从 C3 开始
+    pitch: note,
+    duration: '8n'
+  }))
+};
 
 // 导出所有歌曲
 export const songs: Song[] = [
   twinkleStar,
   happyBirthday,
   pianoRangeTest,
-] 
+]; 
