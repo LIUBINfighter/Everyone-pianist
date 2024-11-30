@@ -5,16 +5,17 @@ import { AudioSettings, defaultAudioSettings } from './types';
 type ChordQuality = 'major' | 'minor' | 'dominant7';
 
 class AudioEngine {
-  private synth: Tone.PolySynth;
+  private synth: Tone.PolySynth | null = null;
   private isInitialized: boolean = false;
   private settings: AudioSettings;
 
   constructor(initialSettings: AudioSettings = defaultAudioSettings) {
     this.settings = initialSettings;
-    this.synth = this.createSynth();
   }
 
   private createSynth() {
+    if (typeof window === 'undefined') return null;
+    
     return new Tone.PolySynth(Tone.Synth, {
       oscillator: {
         type: this.settings.oscillatorType
@@ -33,24 +34,32 @@ class AudioEngine {
     this.settings = newSettings;
     
     // 更新合成器参数
-    this.synth.set({
-      oscillator: {
-        type: newSettings.oscillatorType
-      },
-      envelope: {
-        attack: newSettings.attack,
-        decay: newSettings.decay,
-        sustain: newSettings.sustain,
-        release: newSettings.release
-      }
-    });
+    if (this.synth) {
+      this.synth.set({
+        oscillator: {
+          type: newSettings.oscillatorType
+        },
+        envelope: {
+          attack: newSettings.attack,
+          decay: newSettings.decay,
+          sustain: newSettings.sustain,
+          release: newSettings.release
+        }
+      });
 
-    this.synth.volume.value = newSettings.volume;
+      this.synth.volume.value = newSettings.volume;
+    }
   }
 
   // 初始化音频引擎
   private async initialize() {
     if (!this.isInitialized) {
+      if (typeof window === 'undefined') return;
+      
+      if (!this.synth) {
+        this.synth = this.createSynth();
+      }
+      
       await Tone.start();
       await Tone.context.resume();
       this.isInitialized = true;
@@ -65,10 +74,9 @@ class AudioEngine {
         return
       }
 
-      // 确保音频引擎已初始化
       await this.initialize();
+      if (!this.synth) return;
 
-      // 播放音符并让它自然结束
       this.synth.triggerAttackRelease(note, duration);
     } catch (error) {
       console.error('Error playing note:', { error, note, duration });
@@ -78,7 +86,9 @@ class AudioEngine {
   // 停止所有声音
   stopAll() {
     try {
-      this.synth.releaseAll();
+      if (this.synth) {
+        this.synth.releaseAll();
+      }
     } catch (error) {
       console.error('Error stopping audio:', error);
     }
@@ -90,7 +100,9 @@ class AudioEngine {
       await this.initialize();
       
       // 同时触发多个音符
-      this.synth.triggerAttackRelease(notes, duration);
+      if (this.synth) {
+        this.synth.triggerAttackRelease(notes, duration);
+      }
     } catch (error) {
       console.error('Error playing chord:', error);
     }
@@ -140,4 +152,4 @@ class AudioEngine {
 }
 
 // 导出单例实例
-export const audioEngine = new AudioEngine(); 
+export const audioEngine = typeof window !== 'undefined' ? new AudioEngine() : null; 
