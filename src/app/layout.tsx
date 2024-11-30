@@ -13,7 +13,8 @@ export default function RootLayout({
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="system"
-          enableSystem={true}
+          enableSystem
+          disableTransitionOnChange
         >
           <ThemeToggle />
           {children}

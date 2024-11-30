@@ -1,17 +1,21 @@
 import * as Tone from 'tone';
 import { AudioSettings, defaultAudioSettings } from './types';
 
+// 添加和弦类型的类型定义
+type ChordQuality = 'major' | 'minor' | 'dominant7';
+
 class AudioEngine {
-  private synth: Tone.PolySynth;
+  private synth: Tone.PolySynth | null = null;
   private isInitialized: boolean = false;
   private settings: AudioSettings;
 
   constructor(initialSettings: AudioSettings = defaultAudioSettings) {
     this.settings = initialSettings;
-    this.synth = this.createSynth();
   }
 
   private createSynth() {
+    if (typeof window === 'undefined') return null;
+    
     return new Tone.PolySynth(Tone.Synth, {
       oscillator: {
         type: this.settings.oscillatorType
@@ -30,24 +34,32 @@ class AudioEngine {
     this.settings = newSettings;
     
     // 更新合成器参数
-    this.synth.set({
-      oscillator: {
-        type: newSettings.oscillatorType
-      },
-      envelope: {
-        attack: newSettings.attack,
-        decay: newSettings.decay,
-        sustain: newSettings.sustain,
-        release: newSettings.release
-      }
-    });
+    if (this.synth) {
+      this.synth.set({
+        oscillator: {
+          type: newSettings.oscillatorType
+        },
+        envelope: {
+          attack: newSettings.attack,
+          decay: newSettings.decay,
+          sustain: newSettings.sustain,
+          release: newSettings.release
+        }
+      });
 
-    this.synth.volume.value = newSettings.volume;
+      this.synth.volume.value = newSettings.volume;
+    }
   }
 
   // 初始化音频引擎
   private async initialize() {
     if (!this.isInitialized) {
+      if (typeof window === 'undefined') return;
+      
+      if (!this.synth) {
+        this.synth = this.createSynth();
+      }
+      
       await Tone.start();
       await Tone.context.resume();
       this.isInitialized = true;
@@ -62,10 +74,9 @@ class AudioEngine {
         return
       }
 
-      // 确保音频引擎已初始化
       await this.initialize();
+      if (!this.synth) return;
 
-      // 播放音符并让它自然结束
       this.synth.triggerAttackRelease(note, duration);
     } catch (error) {
       console.error('Error playing note:', { error, note, duration });
@@ -75,7 +86,9 @@ class AudioEngine {
   // 停止所有声音
   stopAll() {
     try {
-      this.synth.releaseAll();
+      if (this.synth) {
+        this.synth.releaseAll();
+      }
     } catch (error) {
       console.error('Error stopping audio:', error);
     }
@@ -87,31 +100,72 @@ class AudioEngine {
       await this.initialize();
       
       // 同时触发多个音符
-      this.synth.triggerAttackRelease(notes, duration);
+      if (this.synth) {
+        this.synth.triggerAttackRelease(notes, duration);
+      }
     } catch (error) {
       console.error('Error playing chord:', error);
     }
   }
 
-  // 添加和弦工具方法
-  getChordNotes(root: string, quality: string): string[] {
-    // 根据和弦类型返回对应的音符数组
-    const chordMap = {
+  // 修改和弦工具方法的类型声明
+  getChordNotes(root: string, quality: ChordQuality): string[] {
+    // 定义和弦音程映射
+    const chordMap: Record<ChordQuality, number[]> = {
       'major': [0, 4, 7],         // 大三和弦
       'minor': [0, 3, 7],         // 小三和弦
       'dominant7': [0, 4, 7, 10], // 属七和弦
-      // 可以添加更多和弦类型...
     };
 
     const intervals = chordMap[quality] || chordMap['major'];
     return intervals.map(interval => this.transposeNote(root, interval));
   }
 
-  private transposeNote(note: string, semitones: number): string {
-    // 实现音符移调的逻辑
-    // ...
+  // 添加音符移调方法的实现
+  private transposeNote(root: string, semitones: number): string {
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
+    // 解析根音符
+    const noteName = root.slice(0, -1);  // 移除八度数字
+    const octave = parseInt(root.slice(-1));
+    
+    // 获取根音符在音阶中的位置
+    const rootIndex = notes.indexOf(noteName);
+    if (rootIndex === -1) return root; // 如果找不到根音符，返回原始音符
+    
+    // 计算新音符的位置
+    let newIndex = rootIndex + semitones;
+    let newOctave = octave;
+    
+    // 处理跨越八度的情况
+    while (newIndex >= 12) {
+      newIndex -= 12;
+      newOctave++;
+    }
+    while (newIndex < 0) {
+      newIndex += 12;
+      newOctave--;
+    }
+    
+    return `${notes[newIndex]}${newOctave}`;
   }
 }
 
-// 导出单例实例
-export const audioEngine = new AudioEngine(); 
+// 创建单例实例
+let audioEngineInstance: AudioEngine | null = null;
+
+// 导出获取实例的函数
+export function getAudioEngine(): AudioEngine {
+  if (typeof window === 'undefined') {
+    throw new Error('AudioEngine can only be used in browser environment');
+  }
+  
+  if (!audioEngineInstance) {
+    audioEngineInstance = new AudioEngine();
+  }
+  
+  return audioEngineInstance;
+}
+
+// 导出便捷访问实例
+export const audioEngine = typeof window !== 'undefined' ? getAudioEngine() : null; 

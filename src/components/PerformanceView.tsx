@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
-import { audioEngine } from '@/lib/audio'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { audioEngine, getAudioEngine } from '@/lib/audio'
 import { ParticleSystem } from '@/lib/animation'
 import { Song, Note, AudioSettings, defaultAudioSettings } from '@/lib/types'
 import { songs as defaultSongs } from '@/lib/songs/demo'
@@ -18,6 +18,7 @@ export const PerformanceView = () => {
   // 添加新的状态
   const [songs, setSongs] = useState<Song[]>(defaultSongs)
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(defaultAudioSettings)
+  const [isAudioInitialized, setIsAudioInitialized] = useState(false)
 
   // 添加按键状态追踪
   const pressedKeysRef = useRef<Set<string>>(new Set())
@@ -74,7 +75,7 @@ export const PerformanceView = () => {
     const totalNotes = currentSong.notes.length;
     const verticalSpacing = canvas.height / (totalNotes + 1);
     
-    // 为每个音符创建一个气泡
+    // 为每个符创建一个气泡
     currentSong.notes.forEach((_, index) => {
       const y = verticalSpacing * (index + 1);
       particleSystemRef.current?.addBubbleNote(y);
@@ -82,8 +83,8 @@ export const PerformanceView = () => {
   }, [currentSong]);
 
   // 修改播放动画逻辑
-  const playNoteWithAnimation = async (note: Note, index: number) => {
-    if (!particleSystemRef.current || !canvasRef.current) return;
+  const playNoteWithAnimation = useCallback(async (note: Note, index: number) => {
+    if (!particleSystemRef.current || !canvasRef.current || !audioEngine) return;
 
     const canvas = canvasRef.current;
     const verticalSpacing = canvas.height / (currentSong.notes.length + 1);
@@ -93,12 +94,16 @@ export const PerformanceView = () => {
     particleSystemRef.current.addBubbleNote(y, true);
 
     // 播放音符
-    if (Array.isArray(note.pitch)) {
-      await audioEngine.playChord(note.pitch, note.duration);
-    } else {
-      await audioEngine.playNote(note.pitch, note.duration);
+    try {
+      if (Array.isArray(note.pitch)) {
+        await audioEngine.playChord(note.pitch, note.duration);
+      } else {
+        await audioEngine.playNote(note.pitch, note.duration);
+      }
+    } catch (error) {
+      console.error('播放音符失败:', error);
     }
-  };
+  }, [currentSong.notes.length]);
 
   // 处理按键事件
   useEffect(() => {
@@ -157,7 +162,7 @@ export const PerformanceView = () => {
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
     }
-  }, [currentNoteIndex, currentSong.notes, isPlaying])
+  }, [currentNoteIndex, currentSong.notes, isPlaying, playNoteWithAnimation])
 
   // 添加处理函数
   const handleSongAdd = (newSong: Song) => {
@@ -166,10 +171,31 @@ export const PerformanceView = () => {
     setCurrentNoteIndex(0)   // 重置音符索引
   }
 
-  const handleSettingsChange = (newSettings: AudioSettings) => {
-    setAudioSettings(newSettings)
-    audioEngine.updateSettings(newSettings)
-  }
+  const handleSettingsChange = useCallback((newSettings: AudioSettings) => {
+    setAudioSettings(newSettings);
+    try {
+      if (isAudioInitialized) {
+        const engine = getAudioEngine();
+        engine.updateSettings(newSettings);
+      }
+    } catch (error) {
+      console.error('更新音频设置失败:', error);
+    }
+  }, [isAudioInitialized]);
+
+  // 初始化音频引擎
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && !isAudioInitialized) {
+        const engine = getAudioEngine();
+        setIsAudioInitialized(true);
+        // 初始化时应用当前设置
+        engine.updateSettings(audioSettings);
+      }
+    } catch (error) {
+      console.error('初始化音频引擎失败:', error);
+    }
+  }, [audioSettings, isAudioInitialized]);
 
   return (
     <div className="fixed inset-0 bg-music-gradient">
