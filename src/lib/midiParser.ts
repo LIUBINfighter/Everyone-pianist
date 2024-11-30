@@ -1,13 +1,15 @@
 import { Midi } from '@tonejs/midi'
 import { Song, Note } from './types'
 
-interface MidiNote {
-  name: string
-  octave: number
-  duration: number
-  time: number
-  velocity: number
-  midi: number
+// 定义来自 @tonejs/midi 的音符类型
+interface ToneJsMidiNote {
+  midi: number;
+  duration: number;
+  time: number;
+  name: string;
+  velocity: number;
+  ticks: number;
+  durationTicks: number;
 }
 
 // 将 MIDI 音符号转换为音高名称
@@ -30,7 +32,7 @@ function convertDuration(duration: number): string {
 }
 
 // 规范化音符格式
-function normalizeNote(note: any): Note {
+function normalizeNote(note: ToneJsMidiNote): Note {
   try {
     // 检查必要的属性
     if (!note || typeof note.midi !== 'number' || typeof note.duration !== 'number') {
@@ -44,16 +46,18 @@ function normalizeNote(note: any): Note {
 
     console.log('Normalized note:', { original: note, normalized: { pitch, duration } })
     return { pitch, duration }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error normalizing note:', { note, error })
     throw error
   }
 }
 
 export async function parseMidiFile(file: File): Promise<Song> {
+  console.log('开始解析MIDI文件:', file.name);
   try {
     // 读取文件数据
     const arrayBuffer = await file.arrayBuffer()
+    console.log('文件读取成功, 大小:', arrayBuffer.byteLength);
     const midi = new Midi(arrayBuffer)
 
     console.log('Parsed MIDI file:', midi)
@@ -74,9 +78,9 @@ export async function parseMidiFile(file: File): Promise<Song> {
     const notes: Note[] = []
     for (const note of sortedNotes) {
       try {
-        const normalizedNote = normalizeNote(note)
+        const normalizedNote = normalizeNote(note as ToneJsMidiNote)
         notes.push(normalizedNote)
-      } catch (error) {
+      } catch {
         console.warn('Skipping invalid note:', note)
       }
     }
@@ -88,7 +92,7 @@ export async function parseMidiFile(file: File): Promise<Song> {
     // 移除文件扩展名
     const title = file.name.replace(/\.(mid|midi)$/i, '')
 
-    const song = {
+    const song: Song = {
       title,
       tempo: midi.header.tempos[0]?.bpm || 120,
       notes

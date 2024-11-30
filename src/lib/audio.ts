@@ -1,6 +1,9 @@
 import * as Tone from 'tone';
 import { AudioSettings, defaultAudioSettings } from './types';
 
+// 添加和弦类型的类型定义
+type ChordQuality = 'major' | 'minor' | 'dominant7';
+
 class AudioEngine {
   private synth: Tone.PolySynth;
   private isInitialized: boolean = false;
@@ -93,23 +96,46 @@ class AudioEngine {
     }
   }
 
-  // 添加和弦工具方法
-  getChordNotes(root: string, quality: string): string[] {
-    // 根据和弦类型返回对应的音符数组
-    const chordMap = {
+  // 修改和弦工具方法的类型声明
+  getChordNotes(root: string, quality: ChordQuality): string[] {
+    // 定义和弦音程映射
+    const chordMap: Record<ChordQuality, number[]> = {
       'major': [0, 4, 7],         // 大三和弦
       'minor': [0, 3, 7],         // 小三和弦
       'dominant7': [0, 4, 7, 10], // 属七和弦
-      // 可以添加更多和弦类型...
     };
 
     const intervals = chordMap[quality] || chordMap['major'];
     return intervals.map(interval => this.transposeNote(root, interval));
   }
 
-  private transposeNote(note: string, semitones: number): string {
-    // 实现音符移调的逻辑
-    // ...
+  // 添加音符移调方法的实现
+  private transposeNote(root: string, semitones: number): string {
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
+    // 解析根音符
+    const noteName = root.slice(0, -1);  // 移除八度数字
+    const octave = parseInt(root.slice(-1));
+    
+    // 获取根音符在音阶中的位置
+    const rootIndex = notes.indexOf(noteName);
+    if (rootIndex === -1) return root; // 如果找不到根音符，返回原始音符
+    
+    // 计算新音符的位置
+    let newIndex = rootIndex + semitones;
+    let newOctave = octave;
+    
+    // 处理跨越八度的情况
+    while (newIndex >= 12) {
+      newIndex -= 12;
+      newOctave++;
+    }
+    while (newIndex < 0) {
+      newIndex += 12;
+      newOctave--;
+    }
+    
+    return `${notes[newIndex]}${newOctave}`;
   }
 }
 

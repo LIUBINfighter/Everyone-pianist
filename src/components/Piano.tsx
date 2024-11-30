@@ -60,6 +60,11 @@ export const Piano: React.FC = () => {
   // 处理按键事件
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('键盘按下:', {
+        code: event.code,
+        key: event.key,
+        repeat: event.repeat
+      });
       // 如果按键已经被按下，则忽略
       if (pressedKeys.has(event.code)) return
       

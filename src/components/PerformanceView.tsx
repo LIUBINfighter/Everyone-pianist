@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { audioEngine } from '@/lib/audio'
 import { ParticleSystem } from '@/lib/animation'
 import { Song, Note, AudioSettings, defaultAudioSettings } from '@/lib/types'
@@ -82,7 +82,7 @@ export const PerformanceView = () => {
   }, [currentSong]);
 
   // 修改播放动画逻辑
-  const playNoteWithAnimation = async (note: Note, index: number) => {
+  const playNoteWithAnimation = useCallback(async (note: Note, index: number) => {
     if (!particleSystemRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
@@ -98,7 +98,7 @@ export const PerformanceView = () => {
     } else {
       await audioEngine.playNote(note.pitch, note.duration);
     }
-  };
+  }, [currentSong.notes.length]);
 
   // 处理按键事件
   useEffect(() => {
@@ -157,7 +157,7 @@ export const PerformanceView = () => {
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('blur', handleBlur)
     }
-  }, [currentNoteIndex, currentSong.notes, isPlaying])
+  }, [currentNoteIndex, currentSong.notes, isPlaying, playNoteWithAnimation])
 
   // 添加处理函数
   const handleSongAdd = (newSong: Song) => {
