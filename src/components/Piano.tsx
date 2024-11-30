@@ -27,7 +27,7 @@ export const Piano: React.FC = () => {
 
   // 播放当前音符
   const playCurrentNote = useCallback(async () => {
-    if (isPlaying) return
+    if (isPlaying || !audioEngine) return  // 添加 audioEngine 检查
 
     const currentNote = currentSong.notes[currentNoteIndex]
     if (currentNote) {
@@ -37,10 +37,10 @@ export const Piano: React.FC = () => {
         // 判断是单音符还是和弦
         if (Array.isArray(currentNote.pitch)) {
           // 播放和弦
-          audioEngine.playChord(currentNote.pitch, currentNote.duration)
+          audioEngine?.playChord(currentNote.pitch, currentNote.duration)
         } else {
           // 播放单音符
-          audioEngine.playNote(currentNote.pitch, currentNote.duration)
+          audioEngine?.playNote(currentNote.pitch, currentNote.duration)
         }
         
         setCurrentNoteIndex(prev => 
@@ -90,7 +90,7 @@ export const Piano: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
-      audioEngine.stopAll()
+      audioEngine?.stopAll()
     }
   }, [playCurrentNote, pressedKeys])
 
@@ -118,7 +118,7 @@ export const Piano: React.FC = () => {
   // 处理设置更新
   const handleSettingsChange = (newSettings: AudioSettings) => {
     setAudioSettings(newSettings)
-    audioEngine.updateSettings(newSettings)
+    audioEngine?.updateSettings(newSettings)
   }
 
   return (

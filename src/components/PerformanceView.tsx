@@ -83,7 +83,7 @@ export const PerformanceView = () => {
 
   // 修改播放动画逻辑
   const playNoteWithAnimation = useCallback(async (note: Note, index: number) => {
-    if (!particleSystemRef.current || !canvasRef.current) return;
+    if (!particleSystemRef.current || !canvasRef.current || !audioEngine) return;
 
     const canvas = canvasRef.current;
     const verticalSpacing = canvas.height / (currentSong.notes.length + 1);
@@ -94,9 +94,9 @@ export const PerformanceView = () => {
 
     // 播放音符
     if (Array.isArray(note.pitch)) {
-      await audioEngine.playChord(note.pitch, note.duration);
+      await audioEngine?.playChord(note.pitch, note.duration);
     } else {
-      await audioEngine.playNote(note.pitch, note.duration);
+      await audioEngine?.playNote(note.pitch, note.duration);
     }
   }, [currentSong.notes.length]);
 
@@ -168,7 +168,7 @@ export const PerformanceView = () => {
 
   const handleSettingsChange = (newSettings: AudioSettings) => {
     setAudioSettings(newSettings)
-    audioEngine.updateSettings(newSettings)
+    audioEngine?.updateSettings(newSettings)
   }
 
   return (
